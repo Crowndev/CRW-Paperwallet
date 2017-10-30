@@ -62,6 +62,12 @@ function setCryptoCurrency(toThis) {
 	  window.WIFPrefix = '5';
 	  window.compressedWIFPrefix = '[Y]';
 	  break;
+	case 'CrownT':
+	  window.networkVersion = 0x6F;
+	  window.privateKeyPrefix = 0xEF;
+	  window.WIFPrefix = '9';
+	  window.compressedWIFPrefix = '[c]';
+	  break;
 	case 'Bitcoin':
 		window.networkVersion = 0x00;
 		window.privateKeyPrefix = 0x80;
