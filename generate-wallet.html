@@ -57,16 +57,11 @@ function setCryptoCurrency(toThis) {
 	switch (toThis)
 	{
 	case 'Crown':
-	  window.networkVersion = 0x00;
+	  window.networkVersion = 0x6F;
+	  // window.networkVersion = 0x01;
 	  window.privateKeyPrefix = 0x80;
 	  window.WIFPrefix = '5';
 	  window.compressedWIFPrefix = '[Y]';
-	  break;
-	case 'CrownT':
-	  window.networkVersion = 0x6F;
-	  window.privateKeyPrefix = 0xEF;
-	  window.WIFPrefix = '9';
-	  window.compressedWIFPrefix = '[c]';
 	  break;
 	case 'Bitcoin':
 		window.networkVersion = 0x00;
@@ -238,8 +233,14 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 
 			// Convert a hex string to a byte array
 			hexToBytes: function (hex) {
-				for (var bytes = [], c = 0; c < hex.length; c += 2)
+				/* console.log('hex', hex)
+				console.log('hex', typeof hex)
+				console.log('mas', hex.substr(0, 2)) */
+				// hex = 0x017506
+				for (var bytes = [], c = 0; c < hex.length; c += 2) {
 					bytes.push(parseInt(hex.substr(c, 2), 16));
+					//console.log('bytes', bytes)
+				}
 				return bytes;
 			},
 
@@ -4804,11 +4805,26 @@ Bitcoin.Address = function (bytes) {
 	if ("string" == typeof bytes) {
 		bytes = Bitcoin.Address.decodeString(bytes);
 	}
+	console.log('bytes', bytes)
 	this.hash = bytes;
 	this.version = Bitcoin.Address.networkVersion;
 };
 
 Bitcoin.Address.networkVersion = window.networkVersion; // multiple coin support
+
+Bitcoin.Address.prototype.hexToByte = function(str) {
+    if (!str) {
+      return new Uint8Array();
+    }
+
+    let a = [];
+    for (let i = 0, len = str.length; i < len; i+=2) {
+      a.push(parseInt(str.substr(i,2),16));
+    }
+
+    return new Uint8Array(a);
+  }
+
 
 /**
 * Serialize this object as a standard Bitcoin address.
@@ -4816,14 +4832,21 @@ Bitcoin.Address.networkVersion = window.networkVersion; // multiple coin support
 * Returns the address as a base58-encoded string in the standardized format.
 */
 Bitcoin.Address.prototype.toString = function () {
-	// Get a copy of the hash
-	var hash = this.hash.slice(0);
+	var version = '017507';
+	var hash160 = Crypto.SHA256(this.hash);
+	hash160 = Crypto.RIPEMD160(hash160)
+	
+	var pubKeyAndVersion = version + hash160;
+	var firstSHA = Crypto.SHA256(this.hexToByte(pubKeyAndVersion));
+    var secondSHA = Crypto.SHA256(firstSHA);
+    var checksum = secondSHA.substr(0, 8).toUpperCase();
 
-	// Version
-	hash.unshift(this.version);
-	var checksum = Crypto.SHA256(Crypto.SHA256(hash, { asBytes: true }), { asBytes: true });
-	var bytes = hash.concat(checksum.slice(0, 4));
-	return Bitcoin.Base58.encode(bytes);
+    let keyWithChecksum = pubKeyAndVersion + checksum;
+
+    let privateKeyWIF = Bitcoin.Base58.encode(this.hexToByte(keyWithChecksum));
+    console.log('WIF compressed - privKey', privateKeyWIF);
+
+	return privateKeyWIF; 
 };
 
 Bitcoin.Address.prototype.getHashBase64 = function () {
