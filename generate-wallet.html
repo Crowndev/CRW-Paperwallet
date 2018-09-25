@@ -57,14 +57,13 @@ function setCryptoCurrency(toThis) {
 	switch (toThis)
 	{
 	case 'Crown':
-	  window.networkVersion = 0x6F;
-	  // window.networkVersion = 0x01;
+	  window.networkVersion = '017507';
 	  window.privateKeyPrefix = 0x80;
 	  window.WIFPrefix = '5';
 	  window.compressedWIFPrefix = '[Y]';
 	  break;
 	case 'Bitcoin':
-		window.networkVersion = 0x00;
+		window.networkVersion = '00';
 		window.privateKeyPrefix = 0x80;
 		window.WIFPrefix = '5';
 		window.compressedWIFPrefix = 'LK';
@@ -233,13 +232,8 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 
 			// Convert a hex string to a byte array
 			hexToBytes: function (hex) {
-				/* console.log('hex', hex)
-				console.log('hex', typeof hex)
-				console.log('mas', hex.substr(0, 2)) */
-				// hex = 0x017506
 				for (var bytes = [], c = 0; c < hex.length; c += 2) {
 					bytes.push(parseInt(hex.substr(c, 2), 16));
-					//console.log('bytes', bytes)
 				}
 				return bytes;
 			},
@@ -4805,48 +4799,27 @@ Bitcoin.Address = function (bytes) {
 	if ("string" == typeof bytes) {
 		bytes = Bitcoin.Address.decodeString(bytes);
 	}
-	console.log('bytes', bytes)
 	this.hash = bytes;
 	this.version = Bitcoin.Address.networkVersion;
 };
 
 Bitcoin.Address.networkVersion = window.networkVersion; // multiple coin support
 
-Bitcoin.Address.prototype.hexToByte = function(str) {
-    if (!str) {
-      return new Uint8Array();
-    }
-
-    let a = [];
-    for (let i = 0, len = str.length; i < len; i+=2) {
-      a.push(parseInt(str.substr(i,2),16));
-    }
-
-    return new Uint8Array(a);
-  }
-
-
 /**
 * Serialize this object as a standard Bitcoin address.
 *
 * Returns the address as a base58-encoded string in the standardized format.
+* https://en.bitcoin.it/wiki/Technical_background_of_version_1_Bitcoin_addresses
 */
 Bitcoin.Address.prototype.toString = function () {
-	var version = '017507';
-	var hash160 = Crypto.SHA256(this.hash);
-	hash160 = Crypto.RIPEMD160(hash160)
-	
-	var pubKeyAndVersion = version + hash160;
-	var firstSHA = Crypto.SHA256(this.hexToByte(pubKeyAndVersion));
-    var secondSHA = Crypto.SHA256(firstSHA);
-    var checksum = secondSHA.substr(0, 8).toUpperCase();
+	var hash = Crypto.RIPEMD160(Crypto.SHA256(this.hash, { asBytes: true }), { asBytes: false })
+	var versionAndPubKey = this.version + hash;
 
-    let keyWithChecksum = pubKeyAndVersion + checksum;
+	var sha = Bitcoin.Util.dsha256(versionAndPubKey).toString();
+    var checksum = sha.substr(0, 8).toUpperCase();
+    var keyWithChecksum = versionAndPubKey + checksum;
 
-    let privateKeyWIF = Bitcoin.Base58.encode(this.hexToByte(keyWithChecksum));
-    console.log('WIF compressed - privKey', privateKeyWIF);
-
-	return privateKeyWIF; 
+    return Bitcoin.Base58.encode(Crypto.util.hexToBytes(keyWithChecksum));
 };
 
 Bitcoin.Address.prototype.getHashBase64 = function () {
@@ -5274,9 +5247,12 @@ Bitcoin.ECKey = (function () {
 		}
 	};
 
+	/**
+	* Get base58 address for a public key
+	*/
 	ECKey.prototype.getBitcoinAddress = function () {
-		var hash = this.getPubKeyHash();
-		var addr = new Bitcoin.Address(hash);
+		var pubKey = this.getPub();
+		var addr = new Bitcoin.Address(pubKey);
 		return addr.toString();
 	};
 
@@ -10938,8 +10914,8 @@ Bitcoin.Util = {
 			</div>
 
             	<span class="item"><b>Security</b></span>
-                <span class="item" style="font-size: 90%;">For secure wallet generation, do not print wallets "live" from darknet-crypto.com<br />Instead, download this generator from GitHub and run the HTML as a "local" file:</span>
-				<span class="item"><a href="https://github.com/Crowndev/CRW-paperwallet" target="_blank" id="footerlabelgithub"><strong>Secure Download</strong> (GitHub ZIP file)</a></span>
+                <span class="item" style="font-size: 90%;">For secure wallet generation, do not print wallets "live" from Crown's code repository<br />Instead, download this generator from GitHub and run the HTML as a "local" file:</span>
+					<span class="item"><a href="https://gitlab.crown.tech/crown/CRW-Paperwallet/-/archive/master/CRW-Paperwallet-master.zip" target="_blank" id="footerlabelgithub"><strong>Secure Download</strong> (GitLab ZIP file)</a></span>
                 
                 
 			</div>
