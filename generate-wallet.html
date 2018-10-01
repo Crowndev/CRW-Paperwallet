@@ -62,6 +62,12 @@ function setCryptoCurrency(toThis) {
 	  window.WIFPrefix = '5';
 	  window.compressedWIFPrefix = '[Y]';
 	  break;
+	case 'CrownT':
+	  window.networkVersion = '6F';
+	  window.privateKeyPrefix = 0xEF;
+	  window.WIFPrefix = '9';
+	  window.compressedWIFPrefix = '[c]';
+	  break;
 	case 'Bitcoin':
 		window.networkVersion = '00';
 		window.privateKeyPrefix = 0x80;
@@ -10914,7 +10920,7 @@ Bitcoin.Util = {
 			</div>
 
             	<span class="item"><b>Security</b></span>
-                <span class="item" style="font-size: 90%;">For secure wallet generation, do not print wallets "live" from Crown's code repository<br />Instead, download this generator from GitHub and run the HTML as a "local" file:</span>
+                <span clas	s="item" style="font-size: 90%;">For secure wallet generation, do not print wallets "live" from Crown's code repository<br />Instead, download this generator from GitHub and run the HTML as a "local" file:</span>
 					<span class="item"><a href="https://gitlab.crown.tech/crown/CRW-Paperwallet/-/archive/master/CRW-Paperwallet-master.zip" target="_blank" id="footerlabelgithub"><strong>Secure Download</strong> (GitLab ZIP file)</a></span>
                 
                 
