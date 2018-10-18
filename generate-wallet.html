@@ -57,19 +57,19 @@ function setCryptoCurrency(toThis) {
 	switch (toThis)
 	{
 	case 'Crown':
-	  window.networkVersion = 0x00;
+	  window.networkVersion = '017507';
 	  window.privateKeyPrefix = 0x80;
 	  window.WIFPrefix = '5';
 	  window.compressedWIFPrefix = '[Y]';
 	  break;
 	case 'CrownT':
-	  window.networkVersion = 0x6F;
+	  window.networkVersion = '6F';
 	  window.privateKeyPrefix = 0xEF;
 	  window.WIFPrefix = '9';
 	  window.compressedWIFPrefix = '[c]';
 	  break;
 	case 'Bitcoin':
-		window.networkVersion = 0x00;
+		window.networkVersion = '00';
 		window.privateKeyPrefix = 0x80;
 		window.WIFPrefix = '5';
 		window.compressedWIFPrefix = 'LK';
@@ -4814,16 +4814,17 @@ Bitcoin.Address.networkVersion = window.networkVersion; // multiple coin support
 * Serialize this object as a standard Bitcoin address.
 *
 * Returns the address as a base58-encoded string in the standardized format.
+* https://en.bitcoin.it/wiki/Technical_background_of_version_1_Bitcoin_addresses
 */
 Bitcoin.Address.prototype.toString = function () {
-	// Get a copy of the hash
-	var hash = this.hash.slice(0);
+	var hash = Crypto.RIPEMD160(Crypto.SHA256(this.hash, { asBytes: true }), { asBytes: false })
+	var versionAndPubKey = this.version + hash;
 
-	// Version
-	hash.unshift(this.version);
-	var checksum = Crypto.SHA256(Crypto.SHA256(hash, { asBytes: true }), { asBytes: true });
-	var bytes = hash.concat(checksum.slice(0, 4));
-	return Bitcoin.Base58.encode(bytes);
+	var sha = Bitcoin.Util.dsha256(versionAndPubKey).toString();
+    var checksum = sha.substr(0, 8).toUpperCase();
+    var keyWithChecksum = versionAndPubKey + checksum;
+
+    return Bitcoin.Base58.encode(Crypto.util.hexToBytes(keyWithChecksum));
 };
 
 Bitcoin.Address.prototype.getHashBase64 = function () {
@@ -5251,9 +5252,12 @@ Bitcoin.ECKey = (function () {
 		}
 	};
 
+	/**
+	* Get base58 address for a public key
+	*/
 	ECKey.prototype.getBitcoinAddress = function () {
-		var hash = this.getPubKeyHash();
-		var addr = new Bitcoin.Address(hash);
+		var pubKey = this.getPub();
+		var addr = new Bitcoin.Address(pubKey);
 		return addr.toString();
 	};
 
@@ -10915,8 +10919,8 @@ Bitcoin.Util = {
 			</div>
 
             	<span class="item"><b>Security</b></span>
-                <span class="item" style="font-size: 90%;">For secure wallet generation, do not print wallets "live" from darknet-crypto.com<br />Instead, download this generator from GitHub and run the HTML as a "local" file:</span>
-				<span class="item"><a href="https://github.com/Crowndev/CRW-paperwallet" target="_blank" id="footerlabelgithub"><strong>Secure Download</strong> (GitHub ZIP file)</a></span>
+                <span clas	s="item" style="font-size: 90%;">For secure wallet generation, do not print wallets "live" from Crown's code repository<br />Instead, download this generator from GitHub and run the HTML as a "local" file:</span>
+					<span class="item"><a href="https://gitlab.crown.tech/crown/CRW-Paperwallet/-/archive/master/CRW-Paperwallet-master.zip" target="_blank" id="footerlabelgithub"><strong>Secure Download</strong> (GitLab ZIP file)</a></span>
                 
                 
 			</div>
